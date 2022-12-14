@@ -1,30 +1,67 @@
-import React, { useState } from 'react'
+import { CartState } from '../context/Context'
+import Filters from './Filters';
 import Header from './Header'
-import faker from 'faker'
 import SingleProduct from './SingleProduct';
-
-faker.seed(100);
 
 const Home = () => {
 
-	const productsArray = [...Array(20)].map(() => ({
-		id: faker.datatype.uuid(),
-		name: faker.commerce.productName(),
-		price: faker.commerce.price(),
-		image: faker.random.image(),
-	}));
+	const {
+		state: { products },
+		productState: { sort, byStock, byFastDelivery, byRating, searchQuery },
+	} = CartState();
 
-	// console.log(productsArray);
+	const transformProducts = () => {
+		let sortedProducts = products;
 
-	const [products] = useState(productsArray)
+		if (sort) {
+			sortedProducts = sortedProducts.sort((a, b) =>
+				sort === "lowToHigh" ? a.price - b.price : b.price - a.price
+			);
+		}
 
+		if (!byStock) {
+			sortedProducts = sortedProducts.filter((prod) => prod.inStock);
+		}
+
+		if (byFastDelivery) {
+			sortedProducts = sortedProducts.filter((prod) => prod.fastDelivery);
+		}
+
+		if (byRating) {
+			sortedProducts = sortedProducts.filter(
+				(prod) => prod.ratings >= byRating
+			);
+		}
+
+		if (searchQuery) {
+			sortedProducts = sortedProducts.filter((prod) =>
+				prod.name.toLowerCase().includes(searchQuery)
+			);
+		}
+
+		// if (searchQuery.length > 0) {
+		// 	sortedProducts = products.filter((prod) => {
+		// 		return prod.title.toLowerCase().includes(searchQuery.toLowerCase())
+		// 	}
+		// 	)
+		// }
+
+		return sortedProducts;
+	};
+
+	console.log(products);
 	return (
 		<>
 			<Header />
-			<div className='productContainer'>
-				{products.map((prod => (<SingleProduct prod={prod} key={prod.id} />
-				)))}
+			<div className='home'>
+				{/* FILTERS */}
+				<Filters />
+				<div className='productContainer'>
+					{transformProducts().map((prod) => {
+						return <SingleProduct prod={prod} key={prod.id} />
+					})}
 
+				</div>
 			</div>
 		</>
 	)
